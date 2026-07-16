@@ -1,0 +1,21 @@
+{
+  "name": "claude-trial-part1",
+  "version": "1.0.0",
+  "description": "AI-assisted claude development, as part of doing the Flyrank AI internship project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/owen-darius-tze/claude-trial-part1.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/owen-darius-tze/claude-trial-part1/issues"
+  },
+  "homepage": "https://github.com/owen-darius-tze/claude-trial-part1#readme"
+}
