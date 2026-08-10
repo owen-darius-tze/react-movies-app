@@ -1,5 +1,5 @@
 {
-  "name": "claude-trial-part1",
+  "name": "react-movies-app",
   "version": "1.0.0",
   "description": "AI-assisted claude development, as part of doing the Flyrank AI internship project.",
   "private": true,
@@ -11,8 +11,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.101.4",
+    "lucide-react": "^1.27.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

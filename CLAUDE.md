@@ -2,6 +2,13 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Command
+- 'npm run dev' = Vite dev server
+- 'npm start' = Run compiled backend
+
+## Important
+- Run test suite every time after you finished creating / working on a feature.
+
 ## Repository status
 
 This repository is freshly initialized and contains no application code yet — only a README, a `.gitignore`, and a LICENSE. There is currently no build system, package manifest, source tree, or test suite to document. Update this file as real code and commands are introduced.
