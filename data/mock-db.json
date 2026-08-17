@@ -1,0 +1,194 @@
+{
+  "movies": [
+    {
+      "id": "movie-1",
+      "title": "The Godfather",
+      "imdb": {
+        "rating": 9.2,
+        "year": 1972,
+        "plot": "The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son."
+      },
+      "rotten_tomatoes": {
+        "critic_score": 97,
+        "audience_score": 98,
+        "reviews": [
+          "A cinematic masterpiece that defined a genre.",
+          "Masterful storytelling and acting."
+        ]
+      },
+      "insider_tv": {
+        "news_headlines": ["The lasting legacy of Francis Ford Coppola", "Why The Godfather remains a masterpiece"],
+        "related_articles": ["Behind the scenes: Shooting in Sicily", "The evolution of the Mafia genre"],
+        "behind_scenes_url": "/movies/the-godfather/behind-the-scenes"
+      },
+      "images": {
+        "imdb_url": "/images/movies/godfather-imdb.jpg",
+        "rt_url": "/images/movies/godfather-rt.jpg",
+        "insider_url": "/images/movies/godfather-insider.jpg"
+      },
+      "genres": ["Crime", "Drama"],
+      "runtime": 175,
+      "director": "Francis Ford Coppola",
+      "cast": ["Marlon Brando", "Al Pacino", "James Caan"]
+    },
+    {
+      "id": "movie-2",
+      "title": "Goodfellas",
+      "imdb": {
+        "rating": 8.7,
+        "year": 1990,
+        "plot": "A young man grows up to become a powerful through crime in the mob."
+      },
+      "rotten_tomatoes": {
+        "critic_score": 96,
+        "audience_score": 97,
+        "reviews": [
+          "A high-octane look at the mob life.",
+          "Scorsese at his most energetic."
+        ]
+      },
+      "insider_tv": {
+        "news_headlines": ["How Goodfellas changed mob movies", "The soundtrack of Goodfellas"],
+        "related_articles": ["Scorsese's crime sagas", "The making of a classic"],
+        "behind_scenes_url": "/movies/goodfellas/behind-the-scenes"
+      },
+      "images": {
+        "imdb_url": "/images/movies/goodfellas-imdb.jpg",
+        "rt_url": "/images/movies/goodfellas-rt.jpg",
+        "insider_url": "/images/movies/goodfellas-insider.jpg"
+      },
+      "genres": ["Crime", "Drama"],
+      "runtime": 145,
+      "director": "Martin Scorsese",
+      "cast": ["Robert De Niro", "Ray Liotta", "Joe Pesci"]
+    },
+    {
+      "id": "movie-3",
+      "title": "The Irishman",
+      "imdb": {
+        "rating": 7.8,
+        "year": 2019,
+        "plot": "An FBI agent investigates the disappearance of Jimmy Hoffa."
+      },
+      "rotten_tomatoes": {
+        "critic_score": 94,
+        "audience_score": 76,
+        "reviews": [
+          "A sweeping epic from Scorsese.",
+          "A meditative look at crime and aging."
+        ]
+      },
+      "insider_tv": {
+        "news_headlines": ["The de-aging tech in The Irishman", "De Niro's return to Scorsese"],
+        "related_articles": ["Crime sagas: 50 years later"],
+        "behind_scenes_url": "/movies/the-irishman/behind-the-scenes"
+      },
+      "images": {
+        "imdb_url": "/images/movies/irishman-imdb.jpg",
+        "rt_url": "/images/movies/irishman-rt.jpg",
+        "insider_url": "/images/movies/irishman-insider.jpg"
+      },
+      "genres": ["Crime", "Drama"],
+      "runtime": 209,
+      "director": "Martin Scorsese",
+      "cast": ["Robert De Niro", "Al Pacino", "Joe Pesci"]
+    },
+    {
+      "id": "movie-4",
+      "title": "Casino",
+      "imdb": {
+        "rating": 8.2,
+        "year": 1995,
+        "plot": "A casino boss loses control of his Las Vegas empire."
+      },
+      "rotten_tomatoes": {
+        "critic_score": 73,
+        "audience_score": 83,
+        "reviews": [
+          "A stylish crime drama.",
+          "Fast-paced and colorful."
+        ]
+      },
+      "insider_tv": {
+        "news_headlines": ["The gambling era in cinema", "Casino: A deep dive"],
+        "related_articles": ["Crime and Vegas"],
+        "behind_scenes_url": "/movies/casino/behind-the-scenes"
+      },
+      "images": {
+        "imdb_url": "/images/movies/casino-imdb.jpg",
+        "rt_url": "/images/movies/casino-rt.jpg",
+        "insider_url": "/images/movies/casino-insider.jpg"
+      },
+      "genres": ["Crime", "Drama"],
+      "runtime": 138,
+      "director": "Martin Scorsese",
+      "cast": ["Robert De Niro", "Joe Pesci", "Sharon Stone"]
+    },
+    {
+      "id": "movie-5",
+      "title": "Scarface",
+      "imdb": {
+        "rating": 7.9,
+        "year": 1983,
+        "plot": "A Cuban immigrant rises to power in the Miami drug trade."
+      },
+      "rotten_tomatoes": {
+        "critic_score": 79,
+        "audience_score": 94,
+        "reviews": [
+          "A cult classic of the 80s.",
+          "Intense and visceral."
+        ]
+      },
+      "insider_tv": {
+        "news_headlines": ["The legacy of Scarface", "Al Pacino's iconic role"],
+        "related_articles": ["80s action hits"],
+        "behind_scenes_url": "/movies/scarface/behind-the-scenes"
+      },
+      "images": {
+        "imdb_url": "/images/movies/scarface-imdb.jpg",
+        "rt_url": "/images/movies/scarface-rt.jpg",
+        "insider_url": "/images/movies/scarface-insider.jpg"
+      },
+      "genres": ["Crime", "Drama"],
+      "runtime": 179,
+      "director": "Brian De Palma",
+      "cast": ["Al Pacino", "Michelle Pfeiffer"]
+    }
+  ],
+  "celebrities": [
+    {
+      "id": "celebrity-1",
+      "name": "Martin Scorsese",
+      "birthDate": "1942-11-17",
+      "birthPlace": "New York City, USA",
+      "knownFor": ["Goodfellas", "The Irishman", "Casino"],
+      "image_assets": {
+        "rt_img": "/images/celebrities/scorsese-rt.jpg",
+        "insider_img": "/images/celebrities/scorsese-insider.jpg"
+      }
+    },
+    {
+      "id": "celebrity-2",
+      "name": "Al Pacino",
+      "birthDate": "1940-04-01",
+      "birthPlace": "New York City, USA",
+      "knownFor": ["The Godfather", "Scarface", "The Irishman"],
+      "image_assets": {
+        "rt_img": "/images/celebrities/pacino-rt.jpg",
+        "insider_img": "/images/celebrities/pacino-insider.jpg"
+      }
+    },
+    {
+      "id": "celebrity-3",
+      "name": "Robert De Niro",
+      "birthDate": "1943-08-17",
+      "birthPlace": "New York City, USA",
+      "knownFor": ["Goodfellas", "The Irishman", "Casino"],
+      "image_assets": {
+        "rt_img": "/images/celebrities/dero-rt.jpg",
+        "insider_img": "/images/celebrities/dero-insider.jpg"
+      }
+    }
+  ]
+}

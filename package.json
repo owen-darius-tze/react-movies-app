@@ -1,35 +1,33 @@
 {
-  "name": "react-movies-app",
+  "name": "claude-fe-development",
   "version": "1.0.0",
-  "description": "AI-assisted claude development, as part of doing the Flyrank AI internship project.",
-  "private": true,
-  "type": "module",
-  "license": "MIT",
+  "description": "The frontend for the Flyrank AI internship project, built with AI-assisted development. This repository is a fresh start: the first attempt was abandoned because its output deviated from the intended design, so work here keeps that goal in focus.",
+  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@tanstack/react-query": "^5.101.4",
-    "lucide-react": "^1.27.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^7.18.1"
-  },
-  "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "typescript": "^5.5.3",
-    "vite": "^5.4.0"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/owen-darius-tze/claude-trial-part1.git"
+    "url": "git+https://github.com/owen-darius-tze/claude-FE-development.git"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/owen-darius-tze/claude-trial-part1/issues"
+    "url": "https://github.com/owen-darius-tze/claude-FE-development/issues"
   },
-  "homepage": "https://github.com/owen-darius-tze/claude-trial-part1#readme"
+  "homepage": "https://github.com/owen-darius-tze/claude-FE-development#readme",
+  "dependencies": {
+    "clsx": "^2.1.1",
+    "framer-motion": "^13.1.0",
+    "lucide-react": "^1.31.0",
+    "next": "^16.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.6.0"
+  }
 }
