@@ -23,7 +23,7 @@ function App() {
         <div className="container" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
           <Brand />
           <nav className="site-header__nav" aria-label="Primary">
-            <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : undefined)}>
+            <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
               Home
             </NavLink>
           </nav>
