@@ -182,7 +182,7 @@ export default function TitleDetailPage() {
               <h2 className="section__title">Cast</h2>
             </div>
             <div className="cast">
-              {cast.map((c) => (
+              {cast.map((c: any) => (
                 <CastThumb key={`${c.id}-${c.order}`} member={c} />
               ))}
             </div>
