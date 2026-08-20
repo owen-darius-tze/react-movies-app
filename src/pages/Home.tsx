@@ -1,92 +1,198 @@
-import { Play, TrendingUp } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import {
-  useNowPlaying,
-  usePopularMovies,
-  usePopularTV,
-  useTopRatedMovies,
-  useTopRatedTV,
-  useTrending,
-  useUpcoming,
-} from '../lib/hooks/useTmdb'
-import type { Movie, TV } from '../lib/types'
-import { mediaDate, mediaTitle, releaseYear } from '../lib/format'
-import { imageUrl } from '../lib/tmdb'
-import { detailPath } from '../components/MediaCard'
-import { MicroMeter } from '../components/Score'
-import { RailSection } from '../components/Section'
-import { SetupState } from '../components/States'
-import { hasApiKey } from '../lib/tmdb'
+/**
+ * Personalized Dashboard Homepage
+ * Modular widgets driven by AI preferences from chat
+ */
 
-/** Map a react-query result to the simple status RailSection expects. */
-type Status = 'loading' | 'error' | 'success'
-function status(q: { isLoading: boolean; isError: boolean; isSuccess: boolean }): Status {
-  if (q.isLoading) return 'loading'
-  if (q.isError) return 'success' // hide error noise on Home rails
-  return 'success'
-}
-
-function Hero({ item }: { item: Movie & TV }) {
-  const title = mediaTitle(item)
-  const year = releaseYear(mediaDate(item))
-  const media = 'title' in item ? 'movie' : 'tv'
-  return (
-    <section className="hero" aria-label="Featured">
-      <div
-        className="hero__bg"
-        style={item.backdrop_path ? { backgroundImage: `url(${imageUrl(item.backdrop_path, 'w1280')})` } : undefined}
-      />
-      <div className="hero__scrim" />
-      <div className="container hero__content">
-        <span className="hero__eyebrow">
-          <TrendingUp size={14} aria-hidden="true" /> Trending now
-        </span>
-        <h1 className="hero__title">{title}</h1>
-        <p className="hero__overview">{item.overview || 'No description available.'}</p>
-        <div className="hero__meta">
-          {item.vote_average > 0 ? <MicroMeter voteAverage={item.vote_average} voteCount={item.vote_count} /> : null}
-          {year ? <span className="votes">{year}</span> : null}
-          <Link to={detailPath(media, item.id)} className="btn btn--primary">
-            <Play size={16} fill="currentColor" aria-hidden="true" /> View details
-          </Link>
-        </div>
-      </div>
-    </section>
-  )
-}
+import { useEffect, useState } from 'react';
+import { Sparkles, Menu, Search, MessageSquare, Bookmark, Clock } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { DashboardGrid, DEFAULT_WIDGETS, type WidgetConfig } from '../components/DashboardWidgets';
+import { SettingsPanel, SettingsTrigger } from '../components/SettingsPanel';
+import { ChatInterface, ChatFloatButton } from '../components/ChatInterface';
+import { useChatStore } from '../lib/chat/store';
+import { getFeed } from '../lib/data';
+import { saveSourceState } from '../lib/data';
 
 export default function HomePage() {
-  if (!hasApiKey()) {
-    return (
-      <div className="container" style={{ paddingTop: 'var(--space-8)' }}>
-        <SetupState />
-      </div>
-    )
-  }
+  const location = useLocation();
+  const [widgets, setWidgets] = useState<WidgetConfig[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_WIDGETS;
+    try {
+      const saved = localStorage.getItem('microfilm:dashboard');
+      return saved ? JSON.parse(saved) : DEFAULT_WIDGETS;
+    } catch {
+      return DEFAULT_WIDGETS;
+    }
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [feedLoaded, setFeedLoaded] = useState(false);
+  const { profile, clearChat } = useChatStore();
 
-  const trending = useTrending('week')
-  const nowPlaying = useNowPlaying()
-  const upcoming = useUpcoming()
-  const popMovies = usePopularMovies()
-  const popTv = usePopularTV()
-  const topMovies = useTopRatedMovies()
-  const topTv = useTopRatedTV()
+  // Sync widgets with localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'microfilm:dashboard' && e.newValue) {
+        try {
+          setWidgets(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
-  // The first trending item with a backdrop drives the hero. Fall back to now-playing.
-  const trendingItems = (trending.data?.results ?? []) as (Movie & TV)[]
-  const heroCandidate = trendingItems.find((m) => m.backdrop_path) ?? trendingItems[0]
-  const heroItem = heroCandidate ?? ((nowPlaying.data?.results ?? []) as (Movie & TV)[])[0]
+  // Load feed on mount to populate cache
+  useEffect(() => {
+    let mounted = true;
+    getFeed().then(() => {
+      if (mounted) setFeedLoaded(true);
+    });
+    return () => { mounted = false; };
+  }, []);
+
+  const handleReorder = (id: string, direction: 'up' | 'down') => {
+    setWidgets(prev => {
+      const index = prev.findIndex(w => w.id === id);
+      if (index === -1) return prev;
+      const newIndex = direction === 'up' ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= prev.length) return prev;
+      const newWidgets = [...prev];
+      [newWidgets[index], newWidgets[newIndex]] = [newWidgets[newIndex], newWidgets[index]];
+      newWidgets.forEach((w, i) => { w.order = i; });
+      return newWidgets;
+    });
+  };
+
+  const handleToggle = (id: string, enabled: boolean) => {
+    setWidgets(prev => prev.map(w => w.id === id ? { ...w, enabled } : w));
+  };
+
+  const handleRemove = (id: string) => {
+    setWidgets(prev => prev.filter(w => w.id !== id));
+  };
+
+  // Navigation items
+  const navItems = [
+    { path: '/', label: 'Home', icon: <Sparkles size={20} /> },
+    { path: '/search', label: 'Search', icon: <Search size={20} /> },
+    { path: '/chat', label: 'Chat', icon: <MessageSquare size={20} /> },
+    { path: '/watchlist', label: 'Watchlist', icon: <Bookmark size={20} /> },
+    { path: '/history', label: 'History', icon: <Clock size={20} /> },
+  ];
 
   return (
-    <>
-      {heroItem ? <Hero item={heroItem} /> : null}
-      <RailSection title="Now Playing" status={status(nowPlaying)} items={nowPlaying.data?.results} />
-      <RailSection title="Trending This Week" status={status(trending)} items={trendingItems} />
-      <RailSection title="Upcoming" status={status(upcoming)} items={upcoming.data?.results} />
-      <RailSection title="Popular Movies" status={status(popMovies)} items={popMovies.data?.results} />
-      <RailSection title="Popular Series" status={status(popTv)} items={popTv.data?.results} />
-      <RailSection title="Top Rated Movies" status={status(topMovies)} items={topMovies.data?.results} />
-      <RailSection title="Top Rated Series" status={status(topTv)} items={topTv.data?.results} />
-    </>
-  )
+    <div className="app-shell">
+      {/* Mobile sidebar */}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} aria-label="Navigation">
+        <div className="sidebar__header">
+          <Link to="/" className="sidebar__brand" onClick={() => setSidebarOpen(false)}>
+            <img src="/logo.svg" alt="" width="28" height={28} />
+            <span>MicroFilm</span>
+          </Link>
+          <button className="icon-btn" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
+            <Menu size={20} />
+          </button>
+        </div>
+        <nav className="sidebar__nav" aria-label="Main navigation">
+          {navItems.map(item => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`sidebar__link ${location.pathname === item.path ? 'active' : ''}`}
+              onClick={() => setSidebarOpen(false)}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </nav>
+        <div className="sidebar__footer">
+          <SettingsTrigger onOpen={() => { setSettingsOpen(true); setSidebarOpen(false); }} />
+        </div>
+      </aside>
+
+      {/* Sidebar overlay */}
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+
+      {/* Main content */}
+      <main className="main-content">
+        {/* Top bar */}
+        <header className="top-bar">
+          <button className="icon-btn mobile-only" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+            <Menu size={24} />
+          </button>
+          <Link to="/" className="top-bar__brand" onClick={() => setSidebarOpen(false)}>
+            <img src="/logo.svg" alt="" width="28" height={28} />
+            <span>MicroFilm</span>
+          </Link>
+          <nav className="top-bar__nav desktop-only" aria-label="Primary">
+            {navItems.map(item => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={location.pathname === item.path ? 'active' : ''}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </Link>
+            ))}
+          </nav>
+          <div className="top-bar__actions">
+            <SettingsTrigger onOpen={() => setSettingsOpen(true)} />
+            <button className="icon-btn" onClick={() => { setChatOpen(true); setSidebarOpen(false); }} aria-label="Open chat">
+              <MessageSquare size={20} />
+            </button>
+          </div>
+        </header>
+
+        {/* Dashboard */}
+        <div className="dashboard-container">
+          {!feedLoaded ? (
+            <div className="dashboard-loading">
+              <div className="sk" style={{ width: 48, height: 48, margin: '0 auto var(--space-4)' }} />
+              <p>Loading your personalized dashboard...</p>
+            </div>
+          ) : (
+            <DashboardGrid
+              widgets={widgets}
+              profile={profile}
+              onReorder={handleReorder}
+              onToggle={handleToggle}
+              onRemove={handleRemove}
+            />
+          )}
+        </div>
+
+        {/* Empty state for new users */}
+        {widgets.filter(w => w.enabled).length === 0 && feedLoaded && (
+          <div className="dashboard-empty-state">
+            <Sparkles size={64} />
+            <h2>Welcome to MicroFilm!</h2>
+            <p>Your personalized entertainment dashboard is empty. Let's set it up:</p>
+            <div className="empty-actions">
+              <button className="btn btn--primary" onClick={() => setSettingsOpen(true)}>
+                <Sparkles size={16} /> Configure Widgets
+              </button>
+              <button className="btn btn--ghost" onClick={() => setChatOpen(true)}>
+                <MessageSquare size={16} /> Start Chatting
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Modals */}
+      <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ChatInterface
+        minimized={!chatOpen}
+        onToggleMinimize={() => setChatOpen(false)}
+      />
+
+      {/* Floating chat button for mobile */}
+      <ChatFloatButton onOpen={() => setChatOpen(true)} />
+    </div>
+  );
 }

@@ -1,6 +1,10 @@
 import { Routes, Route, NavLink, Link } from 'react-router-dom'
 import { ThemeToggle } from './components/ThemeToggle'
 import HomePage from './pages/Home'
+import SearchPage from './pages/Search'
+import ChatPage from './pages/Chat'
+import WatchlistPage from './pages/Watchlist'
+import HistoryPage from './pages/History'
 import TitleDetailPage from './pages/TitleDetail'
 import PersonPage from './pages/Person'
 import NotFoundPage from './pages/NotFound'
@@ -26,6 +30,18 @@ function App() {
             <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
               Home
             </NavLink>
+            <NavLink to="/search" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Search
+            </NavLink>
+            <NavLink to="/chat" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Chat
+            </NavLink>
+            <NavLink to="/watchlist" className={({ isActive }) => (isActive ? 'active' : '')}>
+              Watchlist
+            </NavLink>
+            <NavLink to="/history" className={({ isActive }) => (isActive ? 'active' : '')}>
+              History
+            </NavLink>
           </nav>
           <div className="site-header__actions">
             <ThemeToggle />
@@ -36,6 +52,10 @@ function App() {
       <main className="app__main">
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/watchlist" element={<WatchlistPage />} />
+          <Route path="/history" element={<HistoryPage />} />
           {/* /title/person/:id is declared before /title/:media/:id so the
               static "person" segment wins regardless of route-ranking behavior. */}
           <Route path="/title/person/:id" element={<PersonPage />} />
@@ -50,7 +70,7 @@ function App() {
           <a href="https://www.themoviedb.org/" target="_blank" rel="noreferrer">
             TMDB
           </a>
-          .
+          , Insider TV & Rotten Tomatoes.
         </div>
       </footer>
     </div>
