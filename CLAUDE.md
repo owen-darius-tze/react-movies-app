@@ -1,4 +1,13 @@
-﻿# Claude Code Development Log
+﻿# MicroFilm rules
+- Explain every change in simple words, like I'm 10.
+- Ask me before big decisions. Never guess.
+- One small job at a time. Stop and tell me how to test it.
+- Keep it simple: fewer files, fewer tricks.
+- API keys live only on the server, never in browser code.
+- Pictures come from TMDB only, with credit in the footer.
+- Done means: `npm run dev` works, no red errors, looks good on a phone.
+
+# Claude Code Development Log
 
 ## Claude Code Prompts Used During Development
 

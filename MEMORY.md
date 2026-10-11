@@ -1,0 +1,1 @@
+- [OmniRoute Configuration](.claude/memory/omniroute-config.md) — OmniRoute gateway config, chat API, UI mechanics, file boundaries

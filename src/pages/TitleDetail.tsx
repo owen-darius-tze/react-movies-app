@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, Film, User } from 'lucide-react'
+import { ArrowLeft, Film } from 'lucide-react'
 import { useCredits, useMovieDetail, useRecommendations, useTvDetail } from '../lib/hooks/useTmdb'
 import type { CastMember, MediaType, Movie, TV } from '../lib/types'
 import { formatDate, formatRuntime, mediaDate, mediaTitle, releaseYear } from '../lib/format'
@@ -7,6 +7,7 @@ import { hasApiKey, imageUrl } from '../lib/tmdb'
 import { MicroMeter } from '../components/Score'
 import { RailSection } from '../components/Section'
 import { ErrorState, SetupState } from '../components/States'
+import { getImageOrPlaceholder, getPersonPlaceholder } from '../lib/utils/placeholders'
 
 function isMovie(m: MediaType): m is 'movie' {
   return m === 'movie'
@@ -28,16 +29,16 @@ function Poster({ path, alt }: { path: string | null; alt: string }) {
 }
 
 function CastThumb({ member }: { member: CastMember }) {
+  const profileUrl = member.profile_path ? imageUrl(member.profile_path, 'w185') : null;
+
   return (
     <Link to={`/title/person/${member.id}`} className="cast__item" aria-label={member.name}>
       <div className="cast__thumb">
-        {member.profile_path ? (
-          <img src={imageUrl(member.profile_path, 'w185')} alt={member.name} loading="lazy" />
-        ) : (
-          <div className="cast__placeholder" aria-hidden="true">
-            <User size={26} />
-          </div>
-        )}
+        <img
+          src={getImageOrPlaceholder(profileUrl, member.name, getPersonPlaceholder, 185)}
+          alt={member.name}
+          loading="lazy"
+        />
       </div>
       <p className="cast__name">{member.name}</p>
       <p className="cast__role">{member.character || '—'}</p>

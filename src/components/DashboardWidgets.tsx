@@ -2,23 +2,19 @@
  * Dashboard Widgets - Modular, connectable UI components for the personalized homepage
  */
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import {
-  Star, TrendingUp, Zap, Newspaper, Bookmark, Clock, Clock as ClockIcon,
-  GripVertical, X, Settings, Eye, EyeOff, ChevronUp, ChevronDown,
+  Star, Zap, Bookmark, Clock as ClockIcon,
+  X, Eye, EyeOff, ChevronUp, ChevronDown,
   Film, Tv, Newspaper as NewspaperIcon, Sparkles, Target
 } from 'lucide-react';
-import { MediaCard, detailPath, type MediaItem } from './MediaCard';
 import { Rail, SkeletonRail } from './Rail';
-import { ScoreBadge } from './Score';
-import { imageUrl } from '../lib/tmdb';
-import type { ContentItem, SourceId, ContentKind, WidgetConfig, WidgetType } from '../lib/chat/types';
-import { getFeed, searchContent, type DataFilters } from '../lib/data';
+import type { SourceId, ContentKind, WidgetConfig, WidgetType, UserPreferenceProfile } from '../lib/chat/types';
+import type { ContentItem } from '../lib/data/types';
 import { useChatStore, scoreContentItem } from '../lib/chat/store';
-import { format } from 'date-fns';
-
-// Import date-fns
+import { useFeedItems } from '../lib/hooks/useFeed';
 import { formatDistanceToNow } from 'date-fns';
+import { getImageOrPlaceholder, getNewsPlaceholder, getMediaPlaceholder } from '../lib/utils/placeholders';
 
 // Widget type configurations
 export const WIDGET_DEFINITIONS: Record<WidgetType, { icon: React.ReactNode; label: string; description: string }> = {
@@ -32,7 +28,7 @@ export const WIDGET_DEFINITIONS: Record<WidgetType, { icon: React.ReactNode; lab
 
 type WidgetProps = {
   config: WidgetConfig;
-  profile: ReturnType<typeof useChatStore>['profile'];
+  profile: UserPreferenceProfile;
   onRemove?: (id: string) => void;
   onReorder?: (id: string, direction: 'up' | 'down') => void;
   onToggle?: (id: string, enabled: boolean) => void;
@@ -40,6 +36,8 @@ type WidgetProps = {
 };
 
 /** Base widget wrapper with common UI */
+type WidgetWrapperProps = Omit<WidgetProps, 'profile'> & { children: React.ReactNode };
+
 function WidgetWrapper({
   children,
   config,
@@ -47,7 +45,7 @@ function WidgetWrapper({
   onReorder,
   onToggle,
   compact,
-}: WidgetProps & { children: React.ReactNode }) {
+}: WidgetWrapperProps) {
   const def = WIDGET_DEFINITIONS[config.type as WidgetType];
 
   if (compact) {
@@ -124,27 +122,37 @@ function WidgetWrapper({
   );
 }
 
+/** Helper to convert ContentItem rating to scoreContentItem rating type */
+function toScoreRating(item: ContentItem): { critic?: number; audience?: number; imdb?: number } | undefined {
+  if (!item.rating) return undefined;
+  return {
+    critic: item.rating.critic,
+    audience: item.rating.audience,
+    imdb: item.rating.imdb,
+  };
+}
+
 /** Recommended for You Widget */
 function RecommendedWidget({ config, profile }: WidgetProps) {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items: allItems, loading } = useFeedItems();
 
-  useEffect(() => {
-    let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
-        // Score items based on preferences
-        const scored = feed.items
-          .map(item => ({ item, score: scoreContentItem(item, profile) }))
-          .sort((a, b) => b.score - a.score)
-          .slice(0, config.maxItems || 10)
-          .map(({ item }) => item);
-        setItems(scored);
-        setLoading(false);
-      }
-    });
-    return () => { mounted = false; };
-  }, [config.maxItems, profile]);
+  const items = useMemo(() => {
+    return allItems
+      .map(item => ({ item, score: scoreContentItem(
+        {
+          id: item.id,
+          source: item.source,
+          kind: item.kind,
+          genres: item.genres,
+          rating: toScoreRating(item),
+          publishedAt: item.publishedAt,
+        },
+        profile
+      ) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, config.maxItems || 10)
+      .map(({ item }) => item);
+  }, [allItems, config.maxItems, profile]);
 
   if (loading) return <WidgetWrapper config={config}><SkeletonRail count={6} /></WidgetWrapper>;
   if (!items.length) return <WidgetWrapper config={config}><div className="widget__empty">No recommendations yet. Start chatting to get personalized picks!</div></WidgetWrapper>;
@@ -162,31 +170,21 @@ function RecommendedWidget({ config, profile }: WidgetProps) {
 
 /** Trending from Insiders Widget */
 function TrendingInsiderWidget({ config }: WidgetProps) {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading } = useFeedItems(item => item.source === 'insider' && (item.kind === 'show' || item.kind === 'article'));
 
-  useEffect(() => {
-    let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
-        const filtered = feed.items
-          .filter(i => i.source === 'insider' && (i.kind === 'show' || i.kind === 'article'))
-          .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-          .slice(0, config.maxItems || 10);
-        setItems(filtered);
-        setLoading(false);
-      }
-    });
-    return () => { mounted = false; };
-  }, [config.maxItems]);
+  const sortedItems = useMemo(() =>
+    [...items]
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, config.maxItems || 10),
+  [items, config.maxItems]);
 
   if (loading) return <WidgetWrapper config={config}><SkeletonRail count={6} /></WidgetWrapper>;
-  if (!items.length) return <WidgetWrapper config={config}><div className="widget__empty">No Insider TV content available</div></WidgetWrapper>;
+  if (!sortedItems.length) return <WidgetWrapper config={config}><div className="widget__empty">No Insider TV content available</div></WidgetWrapper>;
 
   return (
     <WidgetWrapper config={config}>
       <Rail>
-        {items.map(item => (
+        {sortedItems.map(item => (
           <ContentItemCard key={item.id} item={item} showSource />
         ))}
       </Rail>
@@ -196,35 +194,25 @@ function TrendingInsiderWidget({ config }: WidgetProps) {
 
 /** Rotten Tomatoes Top Rated Widget */
 function RottenTomatoesTopWidget({ config }: WidgetProps) {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading } = useFeedItems(item => item.source === 'rottenTomatoes' && item.kind === 'movie' && item.rating !== null);
 
-  useEffect(() => {
-    let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
-        const filtered = feed.items
-          .filter(i => i.source === 'rottenTomatoes' && i.kind === 'movie' && i.rating)
-          .sort((a, b) => {
-            const aScore = a.rating ? Math.max(a.rating.critic || 0, a.rating.audience || 0) : 0;
-            const bScore = b.rating ? Math.max(b.rating.critic || 0, b.rating.audience || 0) : 0;
-            return bScore - aScore;
-          })
-          .slice(0, config.maxItems || 10);
-        setItems(filtered);
-        setLoading(false);
-      }
-    });
-    return () => { mounted = false; };
-  }, [config.maxItems]);
+  const sortedItems = useMemo(() =>
+    [...items]
+      .sort((a, b) => {
+        const aScore = a.rating ? Math.max(a.rating.critic || 0, a.rating.audience || 0) : 0;
+        const bScore = b.rating ? Math.max(b.rating.critic || 0, b.rating.audience || 0) : 0;
+        return bScore - aScore;
+      })
+      .slice(0, config.maxItems || 10),
+  [items, config.maxItems]);
 
   if (loading) return <WidgetWrapper config={config}><SkeletonRail count={6} /></WidgetWrapper>;
-  if (!items.length) return <WidgetWrapper config={config}><div className="widget__empty">No Rotten Tomatoes data available</div></WidgetWrapper>;
+  if (!sortedItems.length) return <WidgetWrapper config={config}><div className="widget__empty">No Rotten Tomatoes data available</div></WidgetWrapper>;
 
   return (
     <WidgetWrapper config={config}>
       <Rail>
-        {items.map((item, idx) => (
+        {sortedItems.map((item, idx) => (
           <ContentItemCard key={item.id} item={item} showRank={idx + 1} showScore />
         ))}
       </Rail>
@@ -234,31 +222,21 @@ function RottenTomatoesTopWidget({ config }: WidgetProps) {
 
 /** Latest News & Reviews Widget */
 function LatestNewsReviewsWidget({ config }: WidgetProps) {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading } = useFeedItems(item => item.kind === 'article' || item.kind === 'show');
 
-  useEffect(() => {
-    let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
-        const filtered = feed.items
-          .filter(i => i.kind === 'article' || i.kind === 'show')
-          .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-          .slice(0, config.maxItems || 10);
-        setItems(filtered);
-        setLoading(false);
-      }
-    });
-    return () => { mounted = false; };
-  }, [config.maxItems]);
+  const sortedItems = useMemo(() =>
+    [...items]
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      .slice(0, config.maxItems || 10),
+  [items, config.maxItems]);
 
   if (loading) return <WidgetWrapper config={config}><SkeletonRail count={6} /></WidgetWrapper>;
-  if (!items.length) return <WidgetWrapper config={config}><div className="widget__empty">No news & reviews available</div></WidgetWrapper>;
+  if (!sortedItems.length) return <WidgetWrapper config={config}><div className="widget__empty">No news & reviews available</div></WidgetWrapper>;
 
   return (
     <WidgetWrapper config={config}>
       <div className="widget__list">
-        {items.map(item => (
+        {sortedItems.map(item => (
           <ContentItemListItem key={item.id} item={item} />
         ))}
       </div>
@@ -268,21 +246,8 @@ function LatestNewsReviewsWidget({ config }: WidgetProps) {
 
 /** Watchlist Widget */
 function WatchlistWidget({ config, profile }: WidgetProps) {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading } = useFeedItems(item => profile.watchlist.includes(item.id));
   const { removeFromWatchlist } = useChatStore();
-
-  useEffect(() => {
-    let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
-        const filtered = feed.items.filter(i => profile.watchlist.includes(i.id));
-        setItems(filtered);
-        setLoading(false);
-      }
-    });
-    return () => { mounted = false; };
-  }, [profile.watchlist, config.maxItems]);
 
   if (loading) return <WidgetWrapper config={config}><SkeletonRail count={6} /></WidgetWrapper>;
   if (!items.length) return <WidgetWrapper config={config}><div className="widget__empty">Your watchlist is empty. Add items from chat or search!</div></WidgetWrapper>;
@@ -291,7 +256,12 @@ function WatchlistWidget({ config, profile }: WidgetProps) {
     <WidgetWrapper config={config}>
       <Rail>
         {items.map(item => (
-          <ContentItemCard key={item.id} item={item} showRemoveWatchlist onRemoveWatchlist={() => removeFromWatchlist(item.id)} />
+          <ContentItemCard
+            key={item.id}
+            item={item}
+            showRemoveWatchlist
+            onRemoveWatchlist={() => removeFromWatchlist(item.id)}
+          />
         ))}
       </Rail>
     </WidgetWrapper>
@@ -300,31 +270,21 @@ function WatchlistWidget({ config, profile }: WidgetProps) {
 
 /** Recently Discussed Widget */
 function RecentlyDiscussedWidget({ config, profile }: WidgetProps) {
-  const [items, setItems] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items, loading } = useFeedItems(item => profile.recentlyDiscussed.includes(item.id));
 
-  useEffect(() => {
-    let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
-        const filtered = feed.items
-          .filter(i => profile.recentlyDiscussed.includes(i.id))
-          .sort((a, b) => profile.recentlyDiscussed.indexOf(a.id) - profile.recentlyDiscussed.indexOf(b.id))
-          .slice(0, config.maxItems || 10);
-        setItems(filtered);
-        setLoading(false);
-      }
-    });
-    return () => { mounted = false; };
-  }, [profile.recentlyDiscussed, config.maxItems]);
+  const sortedItems = useMemo(() =>
+    [...items]
+      .sort((a, b) => profile.recentlyDiscussed.indexOf(a.id) - profile.recentlyDiscussed.indexOf(b.id))
+      .slice(0, config.maxItems || 10),
+  [items, config.maxItems, profile.recentlyDiscussed]);
 
   if (loading) return <WidgetWrapper config={config}><SkeletonRail count={6} /></WidgetWrapper>;
-  if (!items.length) return <WidgetWrapper config={config}><div className="widget__empty">No recent discussions. Start chatting about movies!</div></WidgetWrapper>;
+  if (!sortedItems.length) return <WidgetWrapper config={config}><div className="widget__empty">No recent discussions. Start chatting about movies!</div></WidgetWrapper>;
 
   return (
     <WidgetWrapper config={config}>
       <Rail>
-        {items.map((item, idx) => (
+        {sortedItems.map((item, idx) => (
           <ContentItemCard key={item.id} item={item} showRecency={idx} />
         ))}
       </Rail>
@@ -348,17 +308,9 @@ function ContentItemCard({
   showRank,
   showScore,
   showSource,
-  showRecency,
   showRemoveWatchlist,
   onRemoveWatchlist,
 }: ContentItemCardProps) {
-  const kindIcons: Record<ContentKind, React.ReactNode> = {
-    movie: <Film size={14} />,
-    tv: <Tv size={14} />,
-    show: <Sparkles size={14} />,
-    article: <NewspaperIcon size={14} />,
-  };
-
   const sourceLabels: Record<SourceId, string> = {
     insider: 'Insider TV',
     rottenTomatoes: 'Rotten Tomatoes',
@@ -377,30 +329,61 @@ function ContentItemCard({
 
   const isCertifiedFresh = item.rating?.certifiedFresh;
 
+  // Generate placeholder based on content type
+  const getPlaceholderForItem = (name: string, size: number): string => {
+    switch (item.kind) {
+      case 'movie':
+      case 'tv':
+        return getMediaPlaceholder(name, size);
+      case 'article':
+        return getNewsPlaceholder(name, size);
+      case 'show':
+        return getMediaPlaceholder(name, size);
+      default:
+        return getMediaPlaceholder(name, size);
+    }
+  };
+
+  const imageUrl = getImageOrPlaceholder(item.image, item.title, getPlaceholderForItem, 200);
+
+  // Safe link handler with error handling
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const url = item.sourceUrl;
+    if (!url || url.trim() === '' || url === '#') {
+      e.preventDefault();
+      console.warn('Invalid source URL for item:', item.title);
+      return;
+    }
+    // URL validation
+    try {
+      new URL(url);
+    } catch {
+      e.preventDefault();
+      console.warn('Invalid URL format for item:', item.title, url);
+    }
+  };
+
   return (
-    <article className="content-card" style={{ '--source-color': sourceColors[item.source] }}>
+    <article className="content-card" style={{ '--source-color': sourceColors[item.source] } as React.CSSProperties}>
       <a
         href={item.sourceUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="content-card__link"
         aria-label={`${item.title} on ${sourceLabels[item.source]}`}
+        onClick={handleLinkClick}
       >
         <div className="content-card__poster">
-          {item.image ? (
-            <img src={item.image} alt={item.title} loading="lazy" />
-          ) : (
-            <div className="content-card__placeholder">{kindIcons[item.kind]}</div>
-          )}
+          <img src={imageUrl} alt={item.title} loading="lazy" />
           {showRank && <span className="content-card__rank">{showRank}</span>}
           {showScore && bestRating && (
-            <div className="content-card__score" style={{ background: `var(--source-color)` }}>
+            <div className="content-card__score" style={{ background: `var(--source-color)` } as React.CSSProperties}>
               {bestRating}
               {isCertifiedFresh && <span className="certified-fresh-badge">Fresh</span>}
             </div>
           )}
           {showSource && (
-            <span className="content-card__source" style={{ borderColor: `var(--source-color)` }}>
+            <span className="content-card__source" style={{ borderColor: `var(--source-color)` } as React.CSSProperties}>
               {sourceLabels[item.source]}
             </span>
           )}
@@ -445,10 +428,44 @@ function ContentItemListItem({ item }: { item: ContentItem }) {
     tmdb: 'TMDB',
   };
 
+  // Generate placeholder based on content type
+  const getPlaceholderForItem = (name: string, size: number): string => {
+    switch (item.kind) {
+      case 'movie':
+      case 'tv':
+        return getMediaPlaceholder(name, size);
+      case 'article':
+        return getNewsPlaceholder(name, size);
+      case 'show':
+        return getMediaPlaceholder(name, size);
+      default:
+        return getMediaPlaceholder(name, size);
+    }
+  };
+
+  const imageUrl = getImageOrPlaceholder(item.image, item.title, getPlaceholderForItem, 200);
+
+  // Safe link handler with error handling
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const url = item.sourceUrl;
+    if (!url || url.trim() === '' || url === '#') {
+      e.preventDefault();
+      console.warn('Invalid source URL for item:', item.title);
+      return;
+    }
+    // URL validation
+    try {
+      new URL(url);
+    } catch {
+      e.preventDefault();
+      console.warn('Invalid URL format for item:', item.title, url);
+    }
+  };
+
   return (
-    <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="content-list-item">
+    <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="content-list-item" onClick={handleLinkClick}>
       <div className="content-list-item__image">
-        {item.image ? <img src={item.image} alt="" loading="lazy" /> : <div className="placeholder">{kindIcons[item.kind]}</div>}
+        <img src={imageUrl} alt="" loading="lazy" />
       </div>
       <div className="content-list-item__content">
         <div className="content-list-item__meta">
@@ -500,7 +517,7 @@ export const DEFAULT_WIDGETS: WidgetConfig[] = [
 /** Dashboard Grid - renders all enabled widgets in order */
 interface DashboardGridProps {
   widgets: WidgetConfig[];
-  profile: ReturnType<typeof useChatStore>['profile'];
+  profile: UserPreferenceProfile;
   onReorder: (id: string, direction: 'up' | 'down') => void;
   onToggle: (id: string, enabled: boolean) => void;
   onRemove: (id: string) => void;
@@ -525,7 +542,7 @@ export function DashboardGrid({ widgets, profile, onReorder, onToggle, onRemove,
 
   return (
     <div className={compact ? 'dashboard-grid-compact' : 'dashboard-grid'}>
-      {enabledWidgets.map((widget, idx) => (
+      {enabledWidgets.map((widget) => (
         <DashboardWidget
           key={widget.id}
           config={widget}

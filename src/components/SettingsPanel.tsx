@@ -5,13 +5,12 @@
 import { useState, useEffect } from 'react';
 import {
   X, Settings, Database, RefreshCw, Trash2, Save, Eye, EyeOff,
-  GripVertical, ChevronUp, ChevronDown, Plus, Minus, Sparkles,
-  Zap, Star, Newspaper, Bookmark, Clock, Target, Palette, Bell
+  GripVertical, ChevronUp, ChevronDown, Target, Palette, Bell
 } from 'lucide-react';
-import { useChatStore, type WidgetConfig, type WidgetType } from '../lib/chat/store';
-import { DEFAULT_PREFERENCE_PROFILE } from '../lib/chat/types';
+import { useChatStore } from '../lib/chat/store';
+import type { WidgetConfig, WidgetType } from '../lib/chat/types';
 import { WIDGET_DEFINITIONS, DEFAULT_WIDGETS } from '../components/DashboardWidgets';
-import { saveSourceState, forceRefreshSource, clearAllCaches, getFeed, type SourceConfig, sourceConfigs } from '../lib/data';
+import { saveSourceState, forceRefreshSource, clearAllCaches, sourceConfigs } from '../lib/data';
 
 const STORAGE_KEY = 'microfilm:dashboard';
 
@@ -29,8 +28,7 @@ export function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; onClose: (
   const [sourceStates, setSourceStates] = useState<Record<string, 'enabled' | 'disabled'>>({});
   const [refreshInterval, setRefreshInterval] = useState(30);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const { profile, clearChat, updateProfile, addToWatchlist, removeFromWatchlist } = useChatStore();
+  const { profile, clearChat, updateProfile } = useChatStore();
 
   // Load source states
   useEffect(() => {
@@ -252,7 +250,7 @@ export function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; onClose: (
               <p className="settings-desc">Enable/disable content sources. Disabled sources won't appear in your feed or widgets.</p>
 
               <div className="source-list">
-                {Object.entries(defaultSourceConfigs).map(([id, config]) => {
+                {Object.entries(sourceConfigs).map(([id, config]) => {
                   const enabled = sourceStates[id] !== 'disabled'; // Default to enabled
                   const itemCount = 0; // Could get from feed
                   return (
@@ -433,7 +431,7 @@ export function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; onClose: (
               <p className="settings-desc">Manage cached data and force refreshes.</p>
 
               <div className="data-sources">
-                {Object.entries(defaultSourceConfigs).map(([id, config]) => (
+                {Object.entries(sourceConfigs).map(([id, config]) => (
                   <div key={id} className="data-source-card">
                     <div className="data-source-header">
                       <strong>{config.label}</strong>

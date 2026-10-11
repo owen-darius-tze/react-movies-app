@@ -1,9 +1,10 @@
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, User } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { usePerson } from '../lib/hooks/useTmdb'
 import { formatDate, mediaTitle } from '../lib/format'
 import { hasApiKey, imageUrl } from '../lib/tmdb'
 import { ErrorState, SetupState } from '../components/States'
+import { getImageOrPlaceholder, getPersonPlaceholder } from '../lib/utils/placeholders'
 
 /** Age/lifespan string from birth (+ optional death) dates, e.g. "42". '' if unknown. */
 function ageSpan(born: string | null, died: string | null): string {
@@ -74,13 +75,10 @@ export default function PersonPage() {
         <div className="detail__scrim" />
         <div className="container detail__body">
           <div className="detail__poster">
-            {p.profile_path ? (
-              <img src={imageUrl(p.profile_path, 'w500')} alt={name} />
-            ) : (
-              <div className="card__placeholder" aria-hidden="true">
-                <User size={36} />
-              </div>
-            )}
+            <img
+              src={getImageOrPlaceholder(p.profile_path ? imageUrl(p.profile_path, 'w500') : null, name, getPersonPlaceholder)}
+              alt={name}
+            />
           </div>
           <div className="detail__head">
             <h1>{name}</h1>

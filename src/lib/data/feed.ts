@@ -66,8 +66,10 @@ let inFlightRefresh: Record<SourceId, Promise<ContentItem[]> | null> = {
   tmdb: null,
 };
 
-export async function getFeed(): Promise<FeedResult> {
+export async function getFeed(skipRefresh = false): Promise<FeedResult> {
+  console.log('[getFeed] Starting getFeed');
   const configs = getEffectiveConfigs().filter(c => c.state === 'enabled');
+  console.log('[getFeed] Enabled configs:', configs.map(c => c.id));
   const allItems: ContentItem[] = [];
   const sourceStatuses: FeedResult['sources'] = [];
 
@@ -77,6 +79,7 @@ export async function getFeed(): Promise<FeedResult> {
 
     // 1. Serve stale cache immediately
     const cached = readStaleCache(config.id);
+    console.log('[getFeed] Cache for', config.id, ':', cached ? cached.length + ' items' : 'empty');
     if (cached) {
       allItems.push(...cached);
       const meta = getCacheMeta(config.id);
@@ -96,15 +99,18 @@ export async function getFeed(): Promise<FeedResult> {
     }
 
     // 2. Kick off background refresh (deduplicated)
-    if (!inFlightRefresh[config.id]) {
+    if (!skipRefresh && !inFlightRefresh[config.id]) {
+      console.log('[getFeed] Starting background refresh for', config.id);
       inFlightRefresh[config.id] = refreshSource(config.id, adapter.fetchItems, ttl)
         .then(fresh => {
+          console.log('[getFeed] Background refresh completed for', config.id, ':', fresh.length, 'items');
           inFlightRefresh[config.id] = null;
           // Notify any listeners that fresh data arrived
           window.dispatchEvent(new CustomEvent('microfilm:feed-updated', { detail: { sourceId: config.id } }));
           return fresh;
         })
-        .catch(() => {
+        .catch(err => {
+          console.error('[getFeed] Background refresh failed for', config.id, err);
           inFlightRefresh[config.id] = null;
           return [];
         });

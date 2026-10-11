@@ -3,14 +3,10 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search as SearchIcon, Filter, X, SlidersHorizontal, Star, Zap, Newspaper, Film, Tv, Clock } from 'lucide-react';
-import { MediaCard, detailPath } from '../components/MediaCard';
-import { Rail, SkeletonRail } from '../components/Rail';
-import { ScoreBadge } from '../components/Score';
+import { Search as SearchIcon, X, SlidersHorizontal, Star, Zap, Newspaper, Film, Tv, Clock } from 'lucide-react';
+import { SkeletonRail } from '../components/Rail';
 import { getFeed, searchContent, type ContentItem, type DataFilters, type SourceId, type ContentKind } from '../lib/data';
-import { useChatStore, addToWatchlist, removeFromWatchlist } from '../lib/chat/store';
-import { imageUrl } from '../lib/tmdb';
-import type { MediaType } from '../lib/types';
+import { useChatStore } from '../lib/chat/store';
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
@@ -31,14 +27,15 @@ export default function SearchPage() {
       return [];
     }
   });
-  const { profile } = useChatStore();
 
   // Load feed for initial results
   useEffect(() => {
     let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) setResults(feed.items);
-    });
+    getFeed()
+      .then(feed => {
+        if (mounted) setResults(feed.items);
+      })
+      .catch(() => undefined);
     return () => { mounted = false; };
   }, []);
 
@@ -306,13 +303,15 @@ function SearchResultCard({ item }: { item: ContentItem }) {
   const isCertifiedFresh = item.rating?.certifiedFresh;
 
   return (
-    <article className="search-result-card" style={{ '--source-color': sourceColors[item.source] }}>
+    <article className="search-result-card" style={{ '--source-color': sourceColors[item.source] } as React.CSSProperties}>
       <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="search-result-card__link">
         <div className="search-result-card__image">
           {item.image ? (
             <img src={item.image} alt={item.title} loading="lazy" />
           ) : (
-            <div className="search-result-card__placeholder">{kindIcons[item.kind]}</div>
+            <div className="search-result-card__placeholder">
+              <span className="search-result-card__placeholder-title">{item.title}</span>
+            </div>
           )}
           {bestRating && (
             <div className="search-result-card__score" style={{ background: `var(--source-color)` }}>

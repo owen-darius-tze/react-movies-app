@@ -1,12 +1,13 @@
 import { Send, Square } from 'lucide-react';
+import type { FormEvent, KeyboardEvent } from 'react';
 
 type MessageInputProps = {
   input: string;
   setInput: (value: string) => void;
-  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  handleKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   stop: () => void;
-  status: string;
+  status: 'ready' | 'submitted' | 'streaming' | 'error';
 };
 
 export default function MessageInput({
@@ -18,36 +19,37 @@ export default function MessageInput({
   status,
 }: MessageInputProps) {
   const isStreaming = status === 'streaming' || status === 'submitted';
-  const isDisabled = isStreaming || input.trim().length === 0;
+  const isSubmitDisabled = isStreaming || input.trim().length === 0;
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end space-x-2">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 sm:flex-row sm:items-end">
       <textarea
         value={input}
-        onChange={(e) => setInput(e.target.value)}
+        onChange={(event) => setInput(event.target.value)}
         onKeyDown={handleKeyDown}
         disabled={isStreaming}
-        placeholder="Ask me about movies..."
+        placeholder="Ask about movies, actors, or recommendations..."
         rows={1}
-        className="flex-1 resize-none rounded-md border border-gray-300 bg-gray-900 text-white placeholder-gray-400 p-2 focus:outline-none"
+        className="min-h-[44px] w-full resize-none rounded-xl border border-slate-700 bg-slate-900/80 px-3 py-2.5 text-sm text-slate-50 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-60"
       />
+
       {isStreaming ? (
         <button
           type="button"
           onClick={stop}
           aria-label="Stop generation"
-          className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-md flex items-center justify-center"
+          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-red-600 px-4 text-white transition hover:bg-red-500 sm:w-11"
         >
-          <Square size={18} />
+          <Square size={16} fill="currentColor" />
         </button>
       ) : (
         <button
           type="submit"
-          disabled={isDisabled}
+          disabled={isSubmitDisabled}
           aria-label="Send message"
-          className="p-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-md flex items-center justify-center"
+          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-indigo-600 px-4 text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-11"
         >
-          <Send size={18} />
+          <Send size={16} />
         </button>
       )}
     </form>

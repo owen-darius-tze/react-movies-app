@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
+import { FeedProvider } from './lib/hooks/useFeed'
 import './styles/tokens.css'
 import './App.css'
 
@@ -24,7 +25,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App />
+        <FeedProvider>
+          <App />
+        </FeedProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

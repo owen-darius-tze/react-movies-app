@@ -22,7 +22,7 @@ const STORAGE_KEY = 'microfilm:chat';
  * Extract preferences from assistant response using heuristic analysis.
  * In production, this could call a structured extraction LLM.
  */
-function extractPreferencesFromResponse(content: string, messageId: string): UserPreferencesDelta {
+function extractPreferencesFromResponse(content: string, _messageId: string): UserPreferencesDelta {
   const lower = content.toLowerCase();
   const delta: UserPreferencesDelta = {};
 
@@ -179,7 +179,7 @@ export function scoreContentItem(
     source: SourceId;
     kind: ContentKind;
     genres: string[];
-    rating?: { critic?: number; audience?: number; imdb?: number };
+    rating?: { critic?: number; audience?: number; imdb?: number } | null;
     publishedAt: string;
   },
   profile: UserPreferenceProfile

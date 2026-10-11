@@ -4,42 +4,47 @@
 
 import { useEffect, useState } from 'react';
 import { Clock, X, Sparkles, ArrowUpRight } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { getFeed, type ContentItem } from '../lib/data';
-import { useChatStore, clearChat } from '../lib/chat/store';
+import { useChatStore } from '../lib/chat/store';
 import { SettingsPanel, SettingsTrigger } from '../components/SettingsPanel';
 
 export default function HistoryPage() {
-  const location = useLocation();
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, clearChat: clearChatStore } = useChatStore();
+  const { profile, updateProfile } = useChatStore();
 
   useEffect(() => {
     let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
+
+    getFeed()
+      .then(feed => {
+        if (!mounted) return;
         const historyItems = feed.items
           .filter(item => profile.recentlyDiscussed.includes(item.id))
           .sort((a, b) => profile.recentlyDiscussed.indexOf(a.id) - profile.recentlyDiscussed.indexOf(b.id));
         setItems(historyItems);
-        setLoading(false);
-      }
-    });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
     return () => { mounted = false; };
   }, [profile.recentlyDiscussed]);
 
   // Re-sync when feed updates
   useEffect(() => {
     const handleUpdate = () => {
-      getFeed().then(feed => {
-        const historyItems = feed.items
-          .filter(item => profile.recentlyDiscussed.includes(item.id))
-          .sort((a, b) => profile.recentlyDiscussed.indexOf(a.id) - profile.recentlyDiscussed.indexOf(b.id));
-        setItems(historyItems);
-      });
+      getFeed()
+        .then(feed => {
+          const historyItems = feed.items
+            .filter(item => profile.recentlyDiscussed.includes(item.id))
+            .sort((a, b) => profile.recentlyDiscussed.indexOf(a.id) - profile.recentlyDiscussed.indexOf(b.id));
+          setItems(historyItems);
+        })
+        .catch(() => undefined);
     };
     window.addEventListener('microfilm:feed-updated', handleUpdate);
     return () => window.removeEventListener('microfilm:feed-updated', handleUpdate);
@@ -47,7 +52,7 @@ export default function HistoryPage() {
 
   const handleClearHistory = () => {
     if (window.confirm('Clear your discussion history? This won\'t delete your chat messages.')) {
-      clearChatStore({ ...profile, recentlyDiscussed: [] });
+      updateProfile({ recentlyDiscussed: [] });
     }
   };
 
@@ -172,7 +177,7 @@ function HistoryItem({ item, index }: { item: ContentItem; index: number }) {
     : null;
 
   return (
-    <article className="history-item" style={{ '--source-color': sourceColors[item.source] }}>
+    <article className="history-item" style={{ '--source-color': sourceColors[item.source] } as React.CSSProperties}>
       <div className="history-item__index">{index + 1}</div>
       <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="history-item__link">
         <div className="history-item__image">

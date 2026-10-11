@@ -4,14 +4,13 @@
  * Adds Insider TV articles/shows as first-class items alongside movies.
  */
 
-import type { ContentItem, ContentKind, SourceId } from './types';
+import type { ContentItem, SourceId } from './types';
 
 // Load the raw mock data at build time (tsconfig has resolveJsonModule: true).
 // Vite resolves the JSON path directly; TS infers a literal type from it.
 import mockDb from '../../../information/data/mock-db.json';
 
 type MockMovie = typeof mockDb.movies[0];
-type MockCelebrity = typeof mockDb.celebrities[0];
 
 // Known TMDB CDN poster paths for the seeded movies (from the actual TMDB images)
 // These ensure real art renders in the UI without a TMDB API key.
@@ -21,14 +20,6 @@ const TMDB_POSTERS: Record<string, string> = {
   'The Irishman': '/kLQGlT3w5JleC7lRm2wVb3xPzYd.jpg',
   'Casino': '/mLfQaJY8zYb8WzGqVfYqnC3zQxK.jpg',
   'Scarface': '/xL9vIwQx8K3zQxK8zYb8WzGqVfYq.jpg',
-};
-
-const TMDB_BACKDROPS: Record<string, string> = {
-  'The Godfather': '/tmU7GeKVybMWFButWEGl2M4GeiP.jpg',
-  'Goodfellas': '/9aQe0nGMc8yJwJ4uJYqK8zYb8Wz.jpg',
-  'The Irishman': '/vK5qU8zYb8WzGqVfYqnC3zQxK.jpg',
-  'Casino': '/jK9zYb8WzGqVfYqnC3zQxK8zYb8W.jpg',
-  'Scarface': '/pK9zYb8WzGqVfYqnC3zQxK8zYb8W.jpg',
 };
 
 /** Convert mock movie to ContentItem (from Rotten Tomatoes source) */
@@ -153,7 +144,6 @@ function generateInsiderOriginals(): ContentItem[] {
   const now = new Date();
   const baseYear = now.getFullYear();
   const baseMonth = String(now.getMonth() + 1).padStart(2, '0');
-  const baseDay = String(now.getDate()).padStart(2, '0');
 
   const originals: ContentItem[] = [
     {

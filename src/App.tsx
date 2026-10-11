@@ -24,24 +24,26 @@ function App() {
   return (
     <div className="app">
       <header className="site-header">
-        <div className="container" style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+        <div className="site-header__row">
           <Brand />
           <nav className="site-header__nav" aria-label="Primary">
-            <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
-              Home
-            </NavLink>
-            <NavLink to="/search" className={({ isActive }) => (isActive ? 'active' : '')}>
-              Search
-            </NavLink>
-            <NavLink to="/chat" className={({ isActive }) => (isActive ? 'active' : '')}>
-              Chat
-            </NavLink>
-            <NavLink to="/watchlist" className={({ isActive }) => (isActive ? 'active' : '')}>
-              Watchlist
-            </NavLink>
-            <NavLink to="/history" className={({ isActive }) => (isActive ? 'active' : '')}>
-              History
-            </NavLink>
+            <ul className="site-header__nav-list" role="list">
+              <li><NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
+                Home
+              </NavLink></li>
+              <li><NavLink to="/search" className={({ isActive }) => (isActive ? 'active' : '')}>
+                Search
+              </NavLink></li>
+              <li><NavLink to="/chat" className={({ isActive }) => (isActive ? 'active' : '')}>
+                Chat
+              </NavLink></li>
+              <li><NavLink to="/watchlist" className={({ isActive }) => (isActive ? 'active' : '')}>
+                Watchlist
+              </NavLink></li>
+              <li><NavLink to="/history" className={({ isActive }) => (isActive ? 'active' : '')}>
+                History
+              </NavLink></li>
+            </ul>
           </nav>
           <div className="site-header__actions">
             <ThemeToggle />

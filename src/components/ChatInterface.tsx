@@ -5,9 +5,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, X, Sparkles, Loader2, MessageSquare, Trash2, Copy } from 'lucide-react';
-import { useChatStore, type ChatMessage } from '../lib/chat/store';
+import { useChatStore } from '../lib/chat/store';
 import { buildChatContext, streamChatResponse } from '../lib/chat/api';
-import { getFeed } from '../lib/data';
 
 export function ChatInterface({ minimized = false, onToggleMinimize }: { minimized?: boolean; onToggleMinimize?: () => void }) {
   const { messages, profile, isLoading, error, addUserMessage, addAssistantMessage, clearChat, setError } = useChatStore();
@@ -131,7 +130,7 @@ export function ChatInterface({ minimized = false, onToggleMinimize }: { minimiz
             </div>
           </div>
         ) : (
-          messages.map((msg, idx) => (
+          messages.map((msg) => (
             <div key={msg.id} className={`chat-message ${msg.role}`}>
               <div className="chat-message-bubble">
                 <div className="chat-message-content">{msg.content}</div>
@@ -185,7 +184,6 @@ export function ChatInterface({ minimized = false, onToggleMinimize }: { minimiz
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about movies, shows, ratings, articles..."
             rows={1}
-            maxRows={4}
             disabled={isLoading}
             aria-label="Chat input"
             className="chat-input"

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import { Film } from 'lucide-react'
 import { imageUrl } from '../lib/tmdb'
 import { mediaDate, mediaTitle, releaseYear } from '../lib/format'
 import type { MediaType, Movie, TV } from '../lib/types'
 import { ScoreBadge } from './Score'
+import { getImageOrPlaceholder, getMediaPlaceholder } from '../lib/utils/placeholders'
 
 export type MediaItem = Movie | TV
 
@@ -13,14 +13,10 @@ export function detailPath(media: MediaType | undefined, id: number | string): s
 }
 
 function Poster({ path, alt }: { path: string | null; alt: string }) {
-  if (!path) {
-    return (
-      <div className="card__placeholder" aria-hidden="true">
-        <Film size={28} />
-      </div>
-    )
-  }
-  return <img src={imageUrl(path, 'w342')} alt={alt} loading="lazy" />
+  const posterUrl = path ? imageUrl(path, 'w342') : null;
+  const finalUrl = getImageOrPlaceholder(posterUrl, alt, getMediaPlaceholder);
+
+  return <img src={finalUrl} alt={alt} loading="lazy" />
 }
 
 export function MediaCard({ item }: { item: MediaItem }) {

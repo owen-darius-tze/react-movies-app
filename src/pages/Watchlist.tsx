@@ -3,45 +3,47 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Bookmark, X, Trash2, Sparkles, ArrowUpRight } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
-import { MediaCard, detailPath } from '../components/MediaCard';
+import { Bookmark, X, Sparkles, ArrowUpRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Rail, SkeletonRail } from '../components/Rail';
-import { ScoreBadge } from '../components/Score';
 import { getFeed, type ContentItem } from '../lib/data';
-import { useChatStore, removeFromWatchlist } from '../lib/chat/store';
+import { useChatStore } from '../lib/chat/store';
 import { SettingsPanel, SettingsTrigger } from '../components/SettingsPanel';
 
 export default function WatchlistPage() {
-  const location = useLocation();
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, clearChat } = useChatStore();
+  const { profile } = useChatStore();
 
   useEffect(() => {
     let mounted = true;
-    getFeed().then(feed => {
-      if (mounted) {
+
+    getFeed()
+      .then(feed => {
+        if (!mounted) return;
         const watchlistItems = feed.items.filter(item => profile.watchlist.includes(item.id));
-        // Sort by watchlist order
         watchlistItems.sort((a, b) => profile.watchlist.indexOf(a.id) - profile.watchlist.indexOf(b.id));
         setItems(watchlistItems);
-        setLoading(false);
-      }
-    });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
     return () => { mounted = false; };
   }, [profile.watchlist]);
 
   // Re-sync when feed updates
   useEffect(() => {
     const handleUpdate = () => {
-      getFeed().then(feed => {
-        const watchlistItems = feed.items.filter(item => profile.watchlist.includes(item.id));
-        watchlistItems.sort((a, b) => profile.watchlist.indexOf(a.id) - profile.watchlist.indexOf(b.id));
-        setItems(watchlistItems);
-      });
+      getFeed()
+        .then(feed => {
+          const watchlistItems = feed.items.filter(item => profile.watchlist.includes(item.id));
+          watchlistItems.sort((a, b) => profile.watchlist.indexOf(a.id) - profile.watchlist.indexOf(b.id));
+          setItems(watchlistItems);
+        })
+        .catch(() => undefined);
     };
     window.addEventListener('microfilm:feed-updated', handleUpdate);
     return () => window.removeEventListener('microfilm:feed-updated', handleUpdate);
@@ -172,7 +174,7 @@ function WatchlistItem({ item }: { item: ContentItem }) {
   const isCertifiedFresh = item.rating?.certifiedFresh;
 
   return (
-    <article className="watchlist-item" style={{ '--source-color': sourceColors[item.source] }}>
+    <article className="watchlist-item" style={{ '--source-color': sourceColors[item.source] } as React.CSSProperties}>
       <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="watchlist-item__link">
         <div className="watchlist-item__image">
           {item.image ? (

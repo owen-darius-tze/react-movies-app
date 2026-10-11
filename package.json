@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/owen-darius-tze/claude-FE-development#readme",
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.46",
     "@ai-sdk/openai": "^4.0.44",
     "@ai-sdk/react": "^4.0.73",
     "@tanstack/react-query": "^5.101.4",
@@ -29,6 +30,7 @@
     "date-fns": "^4.4.0",
     "framer-motion": "^13.1.0",
     "lucide-react": "^1.31.0",
+    "next": "^16.3.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.2",
@@ -36,6 +38,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

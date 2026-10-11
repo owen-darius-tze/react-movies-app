@@ -102,10 +102,13 @@ export async function refreshSource(
   ttlMinutes: number
 ): Promise<ContentItem[]> {
   try {
+    console.log('[refreshSource] Fetching fresh data for', sourceId);
     const fresh = await fetchFn();
+    console.log('[refreshSource] Got fresh data for', sourceId, ':', fresh.length, 'items');
     writeCache(sourceId, fresh, ttlMinutes);
     return fresh;
-  } catch {
+  } catch (err) {
+    console.error('[refreshSource] Error for', sourceId, err);
     // On error, return stale cache if available
     return readStaleCache(sourceId) ?? [];
   }

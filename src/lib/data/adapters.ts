@@ -5,7 +5,7 @@
  */
 
 import type { ContentItem, SourceId, SourceConfig } from './types';
-import { seedItems, sourceConfigs } from './seed';
+import { seedItems } from './seed';
 
 /** Adapter interface for any content source */
 export interface SourceAdapter {
@@ -21,11 +21,14 @@ export const rottenTomatoesAdapter: SourceAdapter = {
   label: 'Rotten Tomatoes',
   realTime: false,
   async fetchItems(): Promise<ContentItem[]> {
+    console.log('[rottenTomatoesAdapter] fetchItems called, seedItems:', seedItems.length);
     // Simulate network delay for realistic loading states
     await new Promise(r => setTimeout(r, 300));
-    return seedItems.filter(item =>
+    const result = seedItems.filter(item =>
       item.source === 'rottenTomatoes' && item.kind === 'movie'
     );
+    console.log('[rottenTomatoesAdapter] returning', result.length, 'items');
+    return result;
   },
 };
 
@@ -35,8 +38,11 @@ export const insiderAdapter: SourceAdapter = {
   label: 'Insider TV',
   realTime: false,
   async fetchItems(): Promise<ContentItem[]> {
+    console.log('[insiderAdapter] fetchItems called, seedItems:', seedItems.length);
     await new Promise(r => setTimeout(r, 250));
-    return seedItems.filter(item => item.source === 'insider');
+    const result = seedItems.filter(item => item.source === 'insider');
+    console.log('[insiderAdapter] returning', result.length, 'items');
+    return result;
   },
 };
 

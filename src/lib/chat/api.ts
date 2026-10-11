@@ -3,7 +3,7 @@
  * Integrates with the chat store for preference extraction and context.
  */
 
-import { streamText, CoreMessage } from 'ai';
+import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import type { ChatMessage, UserPreferenceProfile, ChatContext, SourceId, ContentKind } from './types';
 import { getFeed, searchContent, type ContentItem, type DataFilters } from '../data';
@@ -69,7 +69,7 @@ export async function buildChatContext(profile: UserPreferenceProfile): Promise<
 /**
  * Convert chat messages to AI SDK format
  */
-function toCoreMessages(messages: ChatMessage[]): CoreMessage[] {
+function toCoreMessages(messages: ChatMessage[]) {
   return messages.map(m => ({
     role: m.role,
     content: m.content,
@@ -140,7 +140,7 @@ export async function* streamChatResponse(
     system: systemPrompt,
     messages: coreMessages,
     temperature: 0.7,
-    maxTokens: 800,
+    maxOutputTokens: 800,
   });
 
   for await (const chunk of result.textStream) {
@@ -163,7 +163,7 @@ export async function getChatResponse(
     system: systemPrompt,
     messages: coreMessages,
     temperature: 0.7,
-    maxTokens: 800,
+    maxOutputTokens: 800,
   });
 
   return result.text;
