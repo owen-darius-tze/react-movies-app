@@ -73,6 +73,8 @@ function App() {
             TMDB
           </a>
           , Insider TV & Rotten Tomatoes.
+          <br />
+          This product uses the TMDB API but is not endorsed or certified by TMDB.
         </div>
       </footer>
     </div>
