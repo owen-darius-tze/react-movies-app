@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   getCredits,
+  getApiKey,
   getMovieDetail,
   getNowPlaying,
   getPerson,
@@ -120,3 +121,6 @@ export function useSearch(query: string | undefined) {
 
 /** Type helpers for downstream consumers. */
 export type { CastMember, Credits, MediaType, Movie, Person, TV }
+
+/** Re-exported so pages can check key presence without importing tmdb directly. */
+export { hasApiKey, getApiKey }
