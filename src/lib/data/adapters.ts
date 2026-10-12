@@ -63,8 +63,8 @@ function tmdbResultToContentItem(item: {
   known_for_department?: string
 }): ContentItem {
   const title = item.title ?? item.name ?? 'Untitled'
-  const year =
-    item.release_date?.slice(0, 4) ?? item.first_air_date?.slice(0, 4) ?? undefined
+  const yearRaw = item.release_date?.slice(0, 4) ?? item.first_air_date?.slice(0, 4) ?? undefined;
+  const year = yearRaw ? (Number(yearRaw) || undefined) : undefined;
   const rating =
     item.vote_average !== undefined
       ? { critic: Math.round((item.vote_average ?? 0) * 10), imdb: item.vote_average }
@@ -86,7 +86,7 @@ function tmdbResultToContentItem(item: {
           ? `https://www.themoviedb.org/tv/${item.id}`
           : `https://www.themoviedb.org/person/${item.id}`,
     publishedAt: `${year ?? new Date().getFullYear()}-01-01T00:00:00Z`,
-    year,
+    year: year ? Number(year) : undefined,
     extra: { media_type: item.media_type, tmdb_id: item.id },
   }
 }

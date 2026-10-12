@@ -60,6 +60,12 @@ export function saveSourceState(sourceId: SourceId, state: 'enabled' | 'disabled
  * - Triggers background refresh for enabled sources
  * - Returns source status metadata
  */
+let inFlightRefresh: Record<SourceId, Promise<ContentItem[]> | null> = {
+  insider: null,
+  rottenTomatoes: null,
+  tmdb: null,
+};
+
 export async function getFeed(skipRefresh = false): Promise<FeedResult> {
   const configs = getEffectiveConfigs().filter(c => c.state === 'enabled');
   const allItems: ContentItem[] = [];
