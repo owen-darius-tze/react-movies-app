@@ -19,13 +19,14 @@ function Poster({ path, alt }: { path: string | null; alt: string }) {
   return <img src={finalUrl} alt={alt} loading="lazy" />
 }
 
-export function MediaCard({ item }: { item: MediaItem }) {
+export function MediaCard({ item, media }: { item: MediaItem; media?: MediaType }) {
   const title = mediaTitle(item)
   const year = releaseYear(mediaDate(item))
-  const media: MediaType = 'title' in item ? 'movie' : 'tv'
+  // Explicit prop wins (callers know the source list); duck-type otherwise.
+  const kind: MediaType = media ?? ('title' in item ? 'movie' : 'tv')
 
   return (
-    <Link to={detailPath(media, item.id)} className="card" aria-label={title}>
+    <Link to={detailPath(kind, item.id)} className="card" aria-label={title}>
       <div className="card__poster">
         <Poster path={item.poster_path} alt={title} />
         {(item.vote_average ?? 0) > 0 ? (
