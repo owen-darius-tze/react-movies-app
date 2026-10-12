@@ -60,16 +60,8 @@ export function saveSourceState(sourceId: SourceId, state: 'enabled' | 'disabled
  * - Triggers background refresh for enabled sources
  * - Returns source status metadata
  */
-let inFlightRefresh: Record<SourceId, Promise<ContentItem[]> | null> = {
-  insider: null,
-  rottenTomatoes: null,
-  tmdb: null,
-};
-
 export async function getFeed(skipRefresh = false): Promise<FeedResult> {
-  console.log('[getFeed] Starting getFeed');
   const configs = getEffectiveConfigs().filter(c => c.state === 'enabled');
-  console.log('[getFeed] Enabled configs:', configs.map(c => c.id));
   const allItems: ContentItem[] = [];
   const sourceStatuses: FeedResult['sources'] = [];
 
@@ -79,7 +71,6 @@ export async function getFeed(skipRefresh = false): Promise<FeedResult> {
 
     // 1. Serve stale cache immediately
     const cached = readStaleCache(config.id);
-    console.log('[getFeed] Cache for', config.id, ':', cached ? cached.length + ' items' : 'empty');
     if (cached) {
       allItems.push(...cached);
       const meta = getCacheMeta(config.id);
@@ -100,12 +91,9 @@ export async function getFeed(skipRefresh = false): Promise<FeedResult> {
 
     // 2. Kick off background refresh (deduplicated)
     if (!skipRefresh && !inFlightRefresh[config.id]) {
-      console.log('[getFeed] Starting background refresh for', config.id);
       inFlightRefresh[config.id] = refreshSource(config.id, adapter.fetchItems, ttl)
         .then(fresh => {
-          console.log('[getFeed] Background refresh completed for', config.id, ':', fresh.length, 'items');
           inFlightRefresh[config.id] = null;
-          // Notify any listeners that fresh data arrived
           window.dispatchEvent(new CustomEvent('microfilm:feed-updated', { detail: { sourceId: config.id } }));
           return fresh;
         })
@@ -116,6 +104,9 @@ export async function getFeed(skipRefresh = false): Promise<FeedResult> {
         });
     }
   }
+
+  // Wait for any in-flight background refreshes so the returned items are fresh.
+  await Promise.all(Object.values(inFlightRefresh).filter(Boolean));
 
   // Deduplicate by id (in case same content appears in multiple sources)
   const seen = new Set<string>();

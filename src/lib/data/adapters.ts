@@ -46,16 +46,95 @@ export const insiderAdapter: SourceAdapter = {
   },
 };
 
-/** TMDB adapter - would use real TMDB API when key is present; currently empty */
+/**
+ * Convert a TMDB multi-search / trending result into a unified ContentItem.
+ */
+function tmdbResultToContentItem(item: {
+  id: number
+  media_type?: 'movie' | 'tv' | 'person'
+  title?: string
+  name?: string
+  poster_path?: string | null
+  profile_path?: string | null
+  release_date?: string
+  first_air_date?: string
+  overview?: string
+  vote_average?: number
+  known_for_department?: string
+}): ContentItem {
+  const title = item.title ?? item.name ?? 'Untitled'
+  const year =
+    item.release_date?.slice(0, 4) ?? item.first_air_date?.slice(0, 4) ?? undefined
+  const rating =
+    item.vote_average !== undefined
+      ? { critic: Math.round((item.vote_average ?? 0) * 10), imdb: item.vote_average }
+      : null
+
+  return {
+    id: `tmdb-${item.id}`,
+    source: 'tmdb',
+    kind: item.media_type === 'person' ? 'article' : (item.media_type ?? 'movie'),
+    title,
+    description: item.overview ?? '',
+    image: item.poster_path ?? item.profile_path ?? null,
+    genres: [],
+    rating,
+    sourceUrl:
+      item.media_type === 'movie'
+        ? `https://www.themoviedb.org/movie/${item.id}`
+        : item.media_type === 'tv'
+          ? `https://www.themoviedb.org/tv/${item.id}`
+          : `https://www.themoviedb.org/person/${item.id}`,
+    publishedAt: `${year ?? new Date().getFullYear()}-01-01T00:00:00Z`,
+    year,
+    extra: { media_type: item.media_type, tmdb_id: item.id },
+  }
+}
+
+/** TMDB adapter - fetches real trending content when a TMDB key is configured. */
 export const tmdbAdapter: SourceAdapter = {
   id: 'tmdb',
   label: 'TMDB',
   realTime: true,
   async fetchItems(): Promise<ContentItem[]> {
-    // When a TMDB key is configured, this would call the TMDB endpoints
-    // For now returns empty - the existing TMDB hooks in src/lib/hooks/useTmdb.ts
-    // handle live TMDB data for the detail pages
-    return [];
+    const key = import.meta.env.VITE_TMDB_API_KEY
+    if (!key) return []
+    try {
+      const [trendingRes, popularRes, peopleRes] = await Promise.all([
+        fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${key}`, { cache: 'no-store' }),
+        fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${key}`, { cache: 'no-store' }),
+        fetch(`https://api.themoviedb.org/3/trending/person/day?api_key=${key}`, { cache: 'no-store' }),
+      ])
+
+      const [trendingData, popularData, peopleData] = await Promise.all([
+        trendingRes.json(),
+        popularRes.json(),
+        peopleRes.json(),
+      ])
+
+      const results: ContentItem[] = []
+      if (trendingRes.ok && trendingData.results) {
+        for (const r of trendingData.results) results.push(tmdbResultToContentItem(r))
+      }
+      if (popularRes.ok && popularData.results) {
+        for (const r of popularData.results) results.push(tmdbResultToContentItem(r))
+      }
+      if (peopleRes.ok && peopleData.results) {
+        for (const r of peopleData.results) results.push(tmdbResultToContentItem(r))
+      }
+
+      const seen = new Set<string>()
+      const deduped: ContentItem[] = []
+      for (const item of results) {
+        if (!seen.has(item.id)) {
+          seen.add(item.id)
+          deduped.push(item)
+        }
+      }
+      return deduped.slice(0, 30)
+    } catch {
+      return []
+    }
   },
 };
 
