@@ -120,6 +120,34 @@ export function getPersonImages(id: number | string): Promise<{ id: number; prof
   return getJson(`/person/${id}/images`)
 }
 
+/**
+ * One entry of a person's credits. These are partial titles — not full
+ * Movie/TV objects — so each field is optional here.
+ */
+export interface PersonCredit {
+  id: number
+  media_type?: string
+  poster_path?: string | null
+  title?: string
+  name?: string
+  release_date?: string
+  first_air_date?: string
+  overview?: string
+  vote_average?: number
+  popularity?: number
+}
+
+/** The `/person/{id}/combined_credits` payload. */
+export interface PersonCombinedCredits {
+  id: number
+  cast: PersonCredit[]
+  crew: unknown[]
+}
+
+export function getPersonCombinedCredits(id: number | string): Promise<PersonCombinedCredits> {
+  return getJson<PersonCombinedCredits>(`/person/${id}/combined_credits`)
+}
+
 // ---- Search ----------------------------------------------------------------
 
 export interface MultiSearchItem {

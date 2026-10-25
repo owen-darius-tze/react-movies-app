@@ -5,6 +5,7 @@ import {
   getMovieDetail,
   getNowPlaying,
   getPerson,
+  getPersonCombinedCredits,
   getPopularMovies,
   getPopularTV,
   getRecommendations,
@@ -107,6 +108,15 @@ export function usePerson(id: string | undefined) {
     enabled: hasApiKey() && Boolean(id),
     queryKey: ['person', id],
     queryFn: () => getPerson(id as string),
+  })
+}
+
+export function usePersonCredits(id: string | undefined) {
+  return useQuery({
+    ...defaults,
+    enabled: hasApiKey() && Boolean(id),
+    queryKey: ['person-credits', id],
+    queryFn: () => getPersonCombinedCredits(id as string),
   })
 }
 
