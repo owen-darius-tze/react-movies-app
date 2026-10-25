@@ -3,18 +3,39 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Bookmark, X, Sparkles, ArrowUpRight } from 'lucide-react';
+import { Bookmark, X, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Rail, SkeletonRail } from '../components/Rail';
 import { getFeed, type ContentItem } from '../lib/data';
 import { useChatStore } from '../lib/chat/store';
 import { SettingsPanel, SettingsTrigger } from '../components/SettingsPanel';
 
+/**
+ * Where a card should link to.
+ * - A TMDB item with a real id opens the site's own detail page.
+ * - Everything else (articles, shows, seed items) opens its source site.
+ * - No usable target at all -> no link, never a broken /title/undefined URL.
+ */
+function cardTarget(item: ContentItem):
+  | { to: string; external: false }
+  | { href: string; external: true }
+  | null {
+  const mediaType = item.extra?.media_type;
+  const tmdbId = item.extra?.tmdb_id;
+  const hasId = typeof tmdbId === 'number' && Number.isFinite(tmdbId);
+  if (hasId && (mediaType === 'movie' || mediaType === 'tv' || mediaType === 'person')) {
+    return { to: `/title/${mediaType}/${tmdbId}`, external: false };
+  }
+  if (typeof item.sourceUrl === 'string' && item.sourceUrl.trim() !== '') {
+    return { href: item.sourceUrl, external: true };
+  }
+  return null;
+}
+
 export default function WatchlistPage() {
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile } = useChatStore();
 
   useEffect(() => {
@@ -51,57 +72,8 @@ export default function WatchlistPage() {
 
   return (
     <div className="watchlist-page">
-      {/* Mobile sidebar */}
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} aria-label="Navigation">
-        <div className="sidebar__header">
-          <Link to="/" className="sidebar__brand" onClick={() => setSidebarOpen(false)}>
-            <img src="/logo.svg" alt="" width="28" height={28} />
-            <span>MicroFilm</span>
-          </Link>
-          <button className="icon-btn" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
-            <ArrowUpRight size={20} />
-          </button>
-        </div>
-        <nav className="sidebar__nav" aria-label="Main navigation">
-          <Link to="/" className="sidebar__link" onClick={() => setSidebarOpen(false)}>
-            <Sparkles size={20} /> <span>Home</span>
-          </Link>
-          <Link to="/search" className="sidebar__link" onClick={() => setSidebarOpen(false)}>
-            <ArrowUpRight size={20} /> <span>Search</span>
-          </Link>
-          <Link to="/chat" className="sidebar__link" onClick={() => setSidebarOpen(false)}>
-            <Sparkles size={20} /> <span>Chat</span>
-          </Link>
-          <Link to="/watchlist" className="sidebar__link active" onClick={() => setSidebarOpen(false)}>
-            <Bookmark size={20} /> <span>Watchlist</span>
-          </Link>
-          <Link to="/history" className="sidebar__link" onClick={() => setSidebarOpen(false)}>
-            <ArrowUpRight size={20} /> <span>History</span>
-          </Link>
-        </nav>
-        <div className="sidebar__footer">
-          <SettingsTrigger onOpen={() => { setSettingsOpen(true); setSidebarOpen(false); }} />
-        </div>
-      </aside>
-
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
-
       <main className="watchlist-page__main">
         <header className="watchlist-page__header">
-          <button className="icon-btn mobile-only" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
-            <ArrowUpRight size={24} />
-          </button>
-          <Link to="/" className="watchlist-page__brand" onClick={() => setSidebarOpen(false)}>
-            <img src="/logo.svg" alt="" width={28} height={28} />
-            <span>MicroFilm</span>
-          </Link>
-          <nav className="watchlist-page__nav desktop-only" aria-label="Primary">
-            <Link to="/" className="">Home</Link>
-            <Link to="/search" className="">Search</Link>
-            <Link to="/chat" className="">Chat</Link>
-            <Link to="/watchlist" className="active">Watchlist</Link>
-            <Link to="/history" className="">History</Link>
-          </nav>
           <div className="watchlist-page__actions">
             <span className="watchlist-count">{items.length} item{items.length !== 1 ? 's' : ''}</span>
             <SettingsTrigger onOpen={() => setSettingsOpen(true)} />
@@ -173,38 +145,54 @@ function WatchlistItem({ item }: { item: ContentItem }) {
 
   const isCertifiedFresh = item.rating?.certifiedFresh;
 
+  const target = cardTarget(item);
+
+  const cardBody = (
+    <>
+      <div className="watchlist-item__image">
+        {item.image ? (
+          <img src={item.image} alt={item.title} loading="lazy" />
+        ) : (
+          <div className="watchlist-item__placeholder">{kindIcons[item.kind]}</div>
+        )}
+        {bestRating && (
+          <div className="watchlist-item__score" style={{ background: `var(--source-color)` }}>
+            {bestRating}
+            {isCertifiedFresh && <span className="certified-fresh-badge">Fresh</span>}
+          </div>
+        )}
+        <span className="watchlist-item__source" style={{ borderColor: `var(--source-color)` }}>
+          {sourceLabels[item.source]}
+        </span>
+      </div>
+      <div className="watchlist-item__content">
+        <h3 className="watchlist-item__title">{item.title}</h3>
+        <p className="watchlist-item__description">{item.description}</p>
+        <div className="watchlist-item__meta">
+          {item.year && <span>{item.year}</span>}
+          {item.genres.length > 0 && (
+            <span className="watchlist-item__genres">
+              {item.genres.slice(0, 3).map(g => <span key={g} className="genre-chip">{g}</span>)}
+            </span>
+          )}
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <article className="watchlist-item" style={{ '--source-color': sourceColors[item.source] } as React.CSSProperties}>
-      <a href={item.sourceUrl} target="_blank" rel="noopener noreferrer" className="watchlist-item__link">
-        <div className="watchlist-item__image">
-          {item.image ? (
-            <img src={item.image} alt={item.title} loading="lazy" />
-          ) : (
-            <div className="watchlist-item__placeholder">{kindIcons[item.kind]}</div>
-          )}
-          {bestRating && (
-            <div className="watchlist-item__score" style={{ background: `var(--source-color)` }}>
-              {bestRating}
-              {isCertifiedFresh && <span className="certified-fresh-badge">Fresh</span>}
-            </div>
-          )}
-          <span className="watchlist-item__source" style={{ borderColor: `var(--source-color)` }}>
-            {sourceLabels[item.source]}
-          </span>
-        </div>
-        <div className="watchlist-item__content">
-          <h3 className="watchlist-item__title">{item.title}</h3>
-          <p className="watchlist-item__description">{item.description}</p>
-          <div className="watchlist-item__meta">
-            {item.year && <span>{item.year}</span>}
-            {item.genres.length > 0 && (
-              <span className="watchlist-item__genres">
-                {item.genres.slice(0, 3).map(g => <span key={g} className="genre-chip">{g}</span>)}
-              </span>
-            )}
-          </div>
-        </div>
-      </a>
+      {target && !target.external ? (
+        <Link to={target.to} className="watchlist-item__link">
+          {cardBody}
+        </Link>
+      ) : target && target.external ? (
+        <a href={target.href} target="_blank" rel="noopener noreferrer" className="watchlist-item__link">
+          {cardBody}
+        </a>
+      ) : (
+        <div className="watchlist-item__link">{cardBody}</div>
+      )}
       <button
         className="watchlist-item__remove"
         onClick={() => removeFromWatchlist(item.id)}
