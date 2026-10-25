@@ -4,4 +4,17 @@
 
 2. Implemented another code where loading state, clear message, and expand bio options are visible, allowing for more intuitiveness.
 
-3. Verdict: I'm creating a website that is functional first, and aesthetics and distinctiveness second.
+3. Removing something can break something else. Claude Code warned me about phone navigation before I found it, and now I know to ask ‘what did this change break?’ after every fix.
+
+4. Verdict: I'm creating a website that is functional first, and aesthetics and distinctiveness second.
+
+## 2026-10-20 · Person page
+What broke: "Known for" row was empty.
+Why: TMDB's person call doesn't include known_for. It comes from a different call (combined_credits).
+Next time: read the API's answer before building the screen.
+
+### Project entries:
+Oct 11: Key file was named VITE_TMDB_API_KEY.env, but Vite only reads .env.local.
+Oct 12: vite build doesn’t check types, so npx tsc --noEmit is a separate check.
+Oct 13: Hooks go at the top, before any early return.
+Oct 20: The 400 error came from the model setting, not the Wi-Fi.
