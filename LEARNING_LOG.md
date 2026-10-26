@@ -13,6 +13,9 @@ What broke: "Known for" row was empty.
 Why: TMDB's person call doesn't include known_for. It comes from a different call (combined_credits).
 Next time: read the API's answer before building the screen.
 
+## 25 October 2026 ##
+One error repeated 9 times can be a single cause. process is unknown means the Node types aren’t loaded, so first check that the package is really installed.
+
 ### Project entries:
 Oct 11: Key file was named VITE_TMDB_API_KEY.env, but Vite only reads .env.local.
 Oct 12: vite build doesn’t check types, so npx tsc --noEmit is a separate check.
